@@ -1,4 +1,4 @@
-def BlindEstimationRT(filename)
+function BlindEstimationRT(filename)
 	% Blind estimation of reverberation time, Paul kendrick, University of
 	% Salford, Acoustics research centre, p.kendrick@salford.ac.uk
 	% This program can compute the reverberation time from passivley recieved
@@ -53,10 +53,11 @@ def BlindEstimationRT(filename)
 	%  fits a Maximum likelihood model to each decay phase, computes the
 	%  dynmaic range, and collects all the results for the following wav file
 	% filename=sprintf('originals/DS_Science_S6_L1.WAV');
-	SIZ=wavread(filename,'size');
+	[music, Fsw] = audioread(filename);
+    SIZ = size(music);  % [n_sample, n_channel]
+    % SIZ=wavread(filename,'size');
 	
 	for Fci=1:8
-	    
 	    % clear Maximum likelihood parameters
 	    a_store1=[];
 	    b_store1=[];
@@ -77,15 +78,18 @@ def BlindEstimationRT(filename)
 	        %% read bit of wav file in from fromN to toN, then filter
 	        fromN=toN+1;
 	        toN=toN+window_split;
-	        if toN> SIZ  toN=SIZ(1);end
-	        [music,Fsw,NBITSw]=wavread(filename,[fromN toN]);%input signal
-	        music=music(:,1);
-	        music = resample(music,Fs2,Fsw)';%resanmple to Fs2
+	        if toN> SIZ 
+                toN=SIZ(1);
+            end
+	        % [music,Fsw,NBITSw]=wavread(filename,[fromN toN]);%input signal
+	        music_seg=music(fromN:toN,1);
+	        music_seg = resample(music_seg,Fs2,Fsw)';%resanmple to Fs2
 	        Fc=Fcm(Fci);
 	        Nf=5;
 	        wc=[Fc/sqrt(2) (Fc/sqrt(2))*2]/(Fs2/2);
 	        [B1,A1] = butter(Nf,wc);
-	        music_fil=filter(B1,A1,music);clear music
+	        music_fil=filter(B1,A1,music_seg);
+            % clear music
 	        %% This function runs the polyfit algorithm, finds decay sphases
 	        %and extracts the ML parameters for the decay model
 	        [start_end_store a_store b_store alpha_store len_store DR ]=MLE_decay_estimatep(music_fil,1,Fs2,Fc,1);
